@@ -5,14 +5,15 @@ class Shelf(models.Model):
     parent = models.ForeignKey('self', null=True)
     #subshelves = models.ManyToManyField('self')
 
+class User(models.Model):
+    uid = models.IntegerField(primary_key=True)
+
 class File(models.Model):
     path = models.CharField(max_length=200)
     size = models.CharField(max_length=100)
-    last_update = models.DateTimeField()
+    # modified = models.DateTimeField()
+    modified = models.CharField(max_length=100)
     revision = models.IntegerField()
     shelves = models.ManyToManyField(Shelf, null=True)
     mime_type = models.CharField(max_length=100)
-
-class User(models.Model):
-    uid = models.IntegerField(primary_key=True)
-    files = models.ManyToManyField(File, null=True)
+    owner = models.ForeignKey(User)

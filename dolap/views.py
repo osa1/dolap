@@ -6,6 +6,8 @@ from oauth import oauth
 
 from dolap.models import User, File, Shelf
 
+import json
+
 APP_KEY = '452mpmxv6d354xd'
 APP_SECRET = 'ihol6nu966f9ts5'
 ACCESS_TYPE = 'app_folder'
@@ -57,6 +59,31 @@ def login(request):
 
     return HttpResponseRedirect('/app/home')
 
+def file_not_found(request):
+    return render_to_response('error.html', {'reason': 'Dosya bulunamadi'})
+
+@require_in_session('dropbox_client', '/app/login')
+def details(request, file=None):
+    try:
+        f = File.objects.get(path=file)
+    except File.DoesNotExist:
+        return file_not_found(request)
+
+    return render_to_response('details.html', {'file': f})
+
+def collect_files(path, client, result):
+    """Recursively collect files in path and it's subfolders using an Dropbox client"""
+    files = client.metadata(path)['contents']
+    for f in files:
+        if f['is_dir']:
+            collect_files(f['path'], client, result)
+        else:
+            result.append(f)
+
+    return result
+
+file_required_fields = ['path', 'size', 'modified', 'revision', 'mime_type', 'owner']
+
 @require_in_session('dropbox_client', '/app/login')
 def home(request):
     """Homepage of the user."""
@@ -66,6 +93,13 @@ def home(request):
     # 'display_name': 'dolap app', 'uid': 66363813, 'country': 'TR',
     # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},
     # 'email': 'dolapapp@gmail.com'}
-    user = User.objects.get_or_create(uid=user_info['uid'])
+    user, is_new = User.objects.get_or_create(uid=user_info['uid'])
+    if is_new:
+        files = collect_files('/', cl, [])
+        for f in files:
+            f['owner'] = user
+            fm = File(**{field : f[field] for field in file_required_fields})
+            fm.save()
 
-    return render_to_response('home.html', cl.account_info())
+    d = {'user': user, 'files': user.file_set.all(), 'account': cl.account_info()}
+    return render_to_response('home.html', d)

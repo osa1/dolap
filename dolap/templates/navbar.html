@@ -10,10 +10,10 @@
       <div class="nav-collapse">
         <ul class="nav pull-left">
           <li {% if page == "home" %}class="active"{% endif %}>
-            <a href="{% if page == "home" %}#{% else %}home{% endif %}">Ev</a>
+            <a href="{% if page == "home" %}#{% else %}/app/home{% endif %}">Ev</a>
           </li>
           <li {% if page == "about" %}class="active"{% endif %}>
-            <a href="{% if page == "about" %}#{% else %}about{% endif %}">Hakkında</a>
+            <a href="{% if page == "about" %}#{% else %}/app/about{% endif %}">Hakkında</a>
           </li>
         </ul>
 
@@ -23,8 +23,8 @@
         </form>
 
         <ul class="nav pull-right">
-          {% if display_name %}
-            <li><p class="navbar-text pull-right">Logged in as <a href="#">{{ display_name }}</a></p></li>
+          {% if account %}
+            <li><p class="navbar-text pull-right">Logged in as <a href="#">{{ account.display_name }}</a></p></li>
             <li class="divider-vertical"></li>
             <li><p class="navbar-text pull-right"><a href="logout">Logout</a></p></li>
           {% endif %}
