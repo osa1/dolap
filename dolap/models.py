@@ -17,3 +17,4 @@ class File(models.Model):
     shelves = models.ManyToManyField(Shelf, null=True)
     mime_type = models.CharField(max_length=100)
     owner = models.ForeignKey(User)
+    description = models.TextField(null=True)

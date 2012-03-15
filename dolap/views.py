@@ -1,8 +1,7 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 
 from dropbox import client, rest, session
-from oauth import oauth
 
 from dolap.models import User, File, Shelf
 
@@ -11,6 +10,12 @@ import json
 APP_KEY = '452mpmxv6d354xd'
 APP_SECRET = 'ihol6nu966f9ts5'
 ACCESS_TYPE = 'app_folder'
+
+def json_test(request):
+    return HttpResponse(json.dumps({'user': 'osa1'}, 'application/json'))
+
+def json_template(request):
+    return render_to_response('json.html', {})
 
 def require_in_session(key, redirect):
     def df(f):
@@ -31,6 +36,58 @@ def intro(request):
 def logout(request):
     request.session.clear()
     return intro(request)
+
+def json_login(request):
+    cl = request.session.get('dropbox_client', False)
+    sess = session.DropboxSession(APP_KEY, APP_SECRET, ACCESS_TYPE)
+    mime_type = 'application/json'
+    if not cl:
+        # user haven't logged in yet
+        if request.session.has_key('oauth_token'):
+            # user have just allowed dropbox, create a session
+            try:
+                access_token = sess.obtain_access_token(request.session['oauth_token'])
+                cl = client.DropboxClient(sess)
+            except client.ErrorResponse:
+                # delete oauth_token and try again from beginning
+                del request.session['oauth_token']
+                return json_login(request)
+            else:
+                request.session['dropbox_client'] = cl
+                return HttpResponse(json.dumps({'response': 'ok'}), mime_type)
+                # return HttpResponseRedirect('/app/home')
+        else:
+            request_token = sess.obtain_request_token()
+            url = sess.build_authorize_url(request_token)
+
+            # request.session['oauth_token'] = request_token.to_string()
+            request.session['oauth_token'] = request_token
+            return HttpResponse(json.dumps({'response': 'fail', 'url': url}), mime_type)
+            # return HttpResponseRedirect(url)
+
+    return HttpReponse(json.dumps({'response': 'ok'}), mime_type)
+    # return HttpResponseRedirect('/app/home')
+
+@require_in_session('dropbox_client', '/app/login')
+def home(request):
+    """Homepage of the user."""
+    cl = request.session['dropbox_client']
+    user_info = cl.account_info()
+    # linked account: {'referral_link': 'https://www.dropbox.com/referrals/NTY2MzYzODEzOQ',
+    # 'display_name': 'dolap app', 'uid': 66363813, 'country': 'TR',
+    # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},
+    # 'email': 'dolapapp@gmail.com'}
+    user, is_new = User.objects.get_or_create(uid=user_info['uid'])
+    request.session['user'] = user
+    if is_new:
+        files = collect_files('/', cl, [])
+        for f in files:
+            f['owner'] = user
+            fm = File(**{field : f[field] for field in file_required_fields})
+            fm.save()
+
+    d = {'user': user, 'files': user.file_set.all(), 'account': cl.account_info()}
+    return render_to_response('home.html', d)
 
 def login(request):
     cl = request.session.get('dropbox_client', False)
@@ -69,7 +126,12 @@ def details(request, file=None):
     except File.DoesNotExist:
         return file_not_found(request)
 
-    return render_to_response('details.html', {'file': f})
+    d = {'file': f, 'owner': False}
+    if request.session['user'] == f.owner:
+        d.update({'owner': True})
+        share_link = request.session['dropbox_client'].share(file)
+        d.update({'share_link': share_link})
+    return render_to_response('details.html', d)
 
 def collect_files(path, client, result):
     """Recursively collect files in path and it's subfolders using an Dropbox client"""
@@ -94,6 +156,8 @@ def home(request):
     # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},
     # 'email': 'dolapapp@gmail.com'}
     user, is_new = User.objects.get_or_create(uid=user_info['uid'])
+    request.session['user'] = user
+    request.session['is_new'] = is_new
     if is_new:
         files = collect_files('/', cl, [])
         for f in files:

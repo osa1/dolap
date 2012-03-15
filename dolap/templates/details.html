@@ -6,8 +6,31 @@
   <div class="row-fluid">
 
     <h2>.</h2>
+    <h2>Paylaşım detayları</h2>
 
     <h4>{{ file.path }}</h4>
+    <p>Paylaşım linki: {{ share_link }}</p>
+
+
+    <table class="table table-striped">
+      <tr>
+        <td>İsim</td>
+        <td>{{ file.path }}</td>
+      </tr>
+      {% if owner %}
+      <tr>
+        <td>Paylaşım linki</td>
+        <td>{{ share_link }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Açıklama</td>
+        <td>{{ desc }}</td>
+      </tr>
+    </table>
+
+    {% if owner %}You own this file.{% endif %}
+
   </div>
 </div>
 {% endblock %}
