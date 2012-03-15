@@ -6,31 +6,57 @@
   <div class="row-fluid">
 
     <h2>.</h2>
-    <h2>Paylaşım detayları</h2>
 
-    <h4>{{ file.path }}</h4>
-    <p>Paylaşım linki: {{ share_link }}</p>
+    <form class="form-horizontal">
+      <fieldset>
+        <legend>Details</legend>
+        <div class="control-group">
+          <label class="control-label" for="input01">File path</label>
+          <div class="controls">
+            <p class="help-block">{{ file.path }}</p>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="input01">Link</label>
+          <div class="controls">
+            <p class="help-block">{{ share_link }}</p>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="textarea">Description</label>
+          <div class="controls">
+            {% if owner %}
+            <textarea id="description-area" class="input-xlarge" id="textarea" rows="3">{{ file.description }}</textarea>
+            {% else %}
+            <p class="help-block">{{ file.description }}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% if owner %}
 
+        <a class="btn btn-primary btn-large" id="edit-btn" href="#">
+          Save changes
+        </a>
 
-    <table class="table table-striped">
-      <tr>
-        <td>İsim</td>
-        <td>{{ file.path }}</td>
-      </tr>
-      {% if owner %}
-      <tr>
-        <td>Paylaşım linki</td>
-        <td>{{ share_link }}</td>
-      </tr>
-      {% endif %}
-      <tr>
-        <td>Açıklama</td>
-        <td>{{ desc }}</td>
-      </tr>
-    </table>
+        {% endif %}
 
-    {% if owner %}You own this file.{% endif %}
-
+      </fieldset>
+    </form>
   </div>
 </div>
+{% endblock %}
+
+{% block end %}
+<script type="text/javascript">
+  $('#edit-btn').click(function() {
+      console.log('lol');
+      $.ajax({
+          type: 'GET',
+          url: '/app/json_edit_file/',
+          data: {description: $('#description-area').val(), path: "{{ file.path }}"},
+          dataType: 'json',
+          success: function(data) { console.log(data) }
+      });
+  });
+</script>
 {% endblock %}
