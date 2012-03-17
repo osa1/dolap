@@ -8,7 +8,7 @@
     <h2>.</h2>
     <h3>Dosyaların</h3>
 
-
+    <a class="btn btn-primary" href="">Dosyalarını düncelle</a>
     <table class="table table-striped" id="filelisttable">
       <td>Dosya</td>
       <td>Boyut</td>
@@ -27,5 +27,28 @@
 {% endblock %}
 
 {% block end %}
-<script src="/media/filelist.js"></script>
+<script type="text/javascript">
+function get_file_list() {
+  $('#filelist').html('Dosya listesi alınıyor.');
+  $.getJSON('/app/json_file_list/',
+    function(data) {
+      if (data.length === 0) {
+        $('#filelist').html('Hiç dosya yok.');
+      } else {
+        $('#filelist').remove();
+        for (var i = 0; i < data.length; i++) {
+          f = data[i];
+          $('#filelisttable').append('<tr id="' + i + '">');
+          $('#' + i).append('<td><a href=\"/app/file/' + f['path'] + "\">" +
+            f['path'] + "</td>");
+          $('#' + i).append('<td>' + f['size'] + '</td>');
+          $('#' + i).append('<td>' + f['modified'] + '</td>');
+          $('#' + i).append('</tr>');
+        }
+      }
+    });
+}
+
+$(document).ready(get_file_list);
+</script>
 {% endblock %}

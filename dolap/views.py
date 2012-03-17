@@ -5,14 +5,47 @@ from dropbox import client, rest, session
 
 from dolap.models import User, File, Shelf
 
+import datetime
 import json
 
 APP_KEY = '452mpmxv6d354xd'
 APP_SECRET = 'ihol6nu966f9ts5'
 ACCESS_TYPE = 'app_folder'
 
+months = {['Jan', 'Feb', 'Mar', 'Apr', 'May',
+    'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i-1]:i for i in range(1, 13)}
+
+
 # these fields will be read from Dropbox API's file dict and written to db
-file_required_fields = ['path', 'size', 'modified', 'revision', 'mime_type', 'owner']
+file_required_fields = ['path', 'size', 'modified', 'revision',
+    'mime_type', 'owner', 'added']
+
+def datetime_to_json(datetime):
+    return datetime.strftime("%d-%m-%Y %H:%M:%S")
+
+def json_to_datetime(json):
+    return json.strptime("%d %m %Y %H:%M:%S")
+
+def filelist_to_json(files):
+    json_list = []
+    for f in files:
+        d = {k:files[k] for k in file_required_fields}
+        d['added'] = datetime_to_json(d['added'])
+        d['updated'] = datetime_to_json(d['updated'])
+        json_list.append(d)
+    return json_list
+
+def last_updated_files(count=10):
+    return filelist_to_json(File.objects.order_by('modified')[:count])
+
+def last_added_files(count=10):
+    return filelist_to_json(File.objects.order_by('added')[:count])
+
+def json_last_added_files(request):
+    return HttpResponse(last_added_files(count=int(request.GET.get('count', 10))))
+
+def json_last_updated_files(request):
+    return HttpResponse(last_updated_files(count=int(request.GET.get('count', 10))))
 
 def collect_files(path, client, result):
     """Recursively collect files in path and it's subfolders using an Dropbox client"""
@@ -26,32 +59,35 @@ def collect_files(path, client, result):
 
     return result
 
-def require_in_session(key, redirect):
-    def df(f):
-        def ddf(request, *args, **kwargs):
-            if request.session.has_key(key):
-                return f(request, *args, **kwargs)
-            return HttpResponseRedirect(redirect)
-        return ddf
+# def require_in_session(key, redirect):
+#     def df(f):
+#         def ddf(request, *args, **kwargs):
+#             if request.session.has_key(key):
+#                 return f(request, *args, **kwargs)
+#             return HttpResponseRedirect(redirect)
+#         return ddf
 
-    return df
+#     return df
 
 def intro(request):
     if request.session.has_key('dropbox_client') or \
         request.session.has_key('oauth_token'):
-        return user_home(request)
-    return render_to_response('intro.html', {'page': 'home'})
+        return HttpResponseRedirect('/app/home/')
+        # return user_home(request)
+    return render_to_response('intro.html', {})
 
 def logout(request):
     request.session.clear()
-    return intro(request)
+    return HttpResponseRedirect('/app/')
+    # return intro(request)
 
 def json_edit_file(request):
+    # TODO: may need to change GET to POST for security reasons
     path = request.GET['path']
     try:
         f = File.objects.get(path=path, owner=request.session['user'])
     except File.DoesNotExist:
-        return HttpReponse(json.dumps({'status': 'error'}))
+        return HttpReponse(json.dumps({'status': 'error', 'reason': 'file does not exist'}))
 
     f.description = request.GET['description']
     f.save()
@@ -66,11 +102,13 @@ def json_login(request):
         # user haven't logged in yet
         if request.session.has_key('oauth_token'):
             # user have just allowed dropbox, create a session
+            print "oauth token var"
             try:
                 access_token = sess.obtain_access_token(request.session['oauth_token'])
                 cl = client.DropboxClient(sess)
             except client.ErrorResponse:
                 # delete oauth_token and try again from beginning
+                print "oauth token hata"
                 del request.session['oauth_token']
                 return json_login(request)
             else:
@@ -86,26 +124,34 @@ def json_login(request):
             return HttpResponse(json.dumps({'response': 'fail', 'url': url}), mime_type)
             # return HttpResponseRedirect(url)
 
-    return HttpReponse(json.dumps({'response': 'ok'}), mime_type)
+    # return HttpReponse(json.dumps({'response': 'ok'}), mime_type)
     # return HttpResponseRedirect('/app/home')
 
-def file_not_found(request):
-    return render_to_response('error.html', {'reason': 'Dosya bulunamadi'})
+# @require_in_session('dropbox_client', '/app/')
+# def details(request, file=None):
+#     try:
+#         f = File.objects.get(path=file)
+#     except File.DoesNotExist:
+#         return file_not_found(request)
 
-@require_in_session('dropbox_client', '/app/login')
-def details(request, file=None):
+#     d = {'file': f, 'owner': False}
+#     if request.session['user'] == f.owner:
+#         d.update({'owner': True})
+#         share_link = request.session['dropbox_client'].share(file)
+#         d.update({'share_link': share_link})
+#     return render_to_response('details.html', d)
+
+def json_file_details(request, file=None):
     try:
         f = File.objects.get(path=file)
     except File.DoesNotExist:
-        return file_not_found(request)
+        return HttpResponse(json.dumps({'result': 'fail', 'reason': 'file does not exist'}))
 
     d = {'file': f, 'owner': False}
-    if request.session['user'] == f.owner:
-        d.update({'owner': True})
-        share_link = request.session['dropbox_client'].share(file)
-        d.update({'share_link': share_link})
-    return render_to_response('details.html', d)
+    if request.session.get('user', None) == f.owner:
+        d['owner'] = True
 
+    return HttpResponse(json.dumps(d))
 
 def json_file_list(request):
     cl = request.session['dropbox_client']
@@ -115,22 +161,53 @@ def json_file_list(request):
     request.session['user'] = user
 
     if is_new:
-        files = collect_files('/', cl, [])
-        for f in files:
-            f['owner'] = user
-            fm = File(**{field : f[field] for field in file_required_fields})
-            fm.save()
-            print f
+        json_update_files(request)
 
-    json_list = [{'path': f.path, 'size': f.size, 'modified': f.modified} \
+    json_list = [{'path': f.path, 'size': f.size,
+        'modified': datetime_to_json(f.modified)} \
         for f in user.file_set.all()]
 
     print json_list
     return HttpResponse(json.dumps(json_list), 'application/json')
 
-@require_in_session('dropbox_client', '/app/login')
+def json_update_files(request):
+    user = request.session['user']
+    for f in File.objects.filter(owner=user):
+        f.delete()
+
+    cl = request.session['dropbox_client']
+    files = collect_files('/', cl, [])
+    for f in files:
+        f['owner'] = user
+        f['added'] = datetime.datetime.now()
+        tokens = f['modified'].split()
+        modified_date = datetime.datetime.strptime(
+            "%s %02d %s %s" % (tokens[1], months[tokens[2]], tokens[3], tokens[4]),
+            "%d %m %Y %H:%M:%S")
+        f['modified'] = modified_date
+        fm = File(**{field : f[field] for field in file_required_fields})
+        fm.added = datetime.datetime.now()
+        fm.save()
+        print f
+
+    json_list = [{'path': f.path, 'size': f.size,
+        'modified': datetime_to_json(f.modified)} \
+        for f in user.file_set.all()]
+
+    return HttpResponse(json.dumps(json_list), 'application/json')
+
+def home(request):
+    d = {'last_updates': File.objects.order_by('modified')[:10],
+         'last_added': File.objects.order_by('added')[:10]}
+    return render_to_response('home.html', d)
+
+# @require_in_session('dropbox_client', '/app/')
 def user_home(request):
     """Homepage of the user."""
+    if not request.session.has_key('dropbox_client'):
+        request.session.clear()
+        return HttpResponseRedirect("/app/")
+
     cl = request.session['dropbox_client']
     user_info = request.session.get('user_info', False)
     if not user_info:
@@ -141,5 +218,5 @@ def user_home(request):
     # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},
     # 'email': 'dolapapp@gmail.com'}
 
-    d = {'account': user_info}
-    return render_to_response('home.html', d)
+    d = {'account': user_info, 'page': 'home'}
+    return render_to_response('user_home.html', d)

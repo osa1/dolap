@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div class="container" role="main">
+  <div class="row-fluid">
+
+    <h2>.</h2>
+    <h3>Dosyaların</h3>
+
+    <p>
+      <a class="btn btn-primary" id="update-button">Dosyalarını güncelle</a>
+    </p>
+
+    <table class="table table-striped" id="filelisttable">
+      <td>Dosya</td>
+      <td>Boyut</td>
+      <td>Son değişiklik</td>
+      <tr><td id="filelist" colspan="3">Hiç dosya yok.</td></tr>
+    </table>
+
+    <div class="span12">
+
+      <h2>.</h2>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block end %}
+<script type="text/javascript">
+
+function update_file_table(data) {
+  if (data.length === 0) {
+    $('#filelist').html('Hiç dosya yok.');
+  } else {
+    $('#filelist').html('');
+    for (var i = 0; i < data.length; i++) {
+      f = data[i];
+      $('#filelisttable').append('<tr id="' + i + '">');
+      $('#' + i).append('<td><a href=\"/app/file/' + f['path'] + "\">" +
+        f['path'] + "</td>");
+      $('#' + i).append('<td>' + f['size'] + '</td>');
+      $('#' + i).append('<td>' + f['modified'] + '</td>');
+      $('#' + i).append('</tr>');
+    }
+  }
+}
+
+function get_file_list() {
+  $('#filelist').html('Dosya listesi alınıyor.');
+  $.getJSON('/app/json_file_list/', update_file_table);
+}
+
+$("#update-button").click(function() {
+  $('#filelist').html('Dosya listesi güncelleniyor.');
+  $.getJSON('/app/json_update_files/', update_file_table);
+});
+
+$(document).ready(get_file_list);
+</script>
+{% endblock %}

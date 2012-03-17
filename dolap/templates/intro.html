@@ -9,7 +9,7 @@
         <h1>Yo!</h1>
         <p>Dolap, basitçe, Dropbox hesabının belirli bir alanındakileri tüm dünyayla düzenli bir şekilde paylaşabilmeni ve başkaları tarafından yapılmış paylaşımları incelemeni, indirmeni, onlara yorum yapmanı ve paylaşımı yapanlarla kolaylıkla haberleşebilmeni sağlar.</p>
 
-        <a class="btn btn-primary btn-large" id="login-btn" href="#">
+        <a class="btn btn-primary btn-large" id="login-btn">
           Dropbox hesabın ile giriş yap
         </a>
 
@@ -22,5 +22,23 @@
 {% endblock %}
 
 {% block end %}
-<script src="/media/clickhandler.js"></script>
+<script type="text/javascript">
+var login_btn = $('#login-btn');
+
+login_btn.click(function() {
+  $.getJSON('/app/json_login/',
+    function(data) {
+      if (data['response'] === 'fail') {
+        console.log("response is fail");
+        login_btn.attr('target', '_blank');
+        login_btn.attr('href', data['url'])
+        login_btn.html('Buraya tıklayıp, açılan sayfadan onay vermelisin.' +
+          ' Daha sonra bu sayfayı yenile.');
+      } else if (data['response'] === 'ok') {
+        console.log('response is ok');
+        window.location.replace("/app/home/");
+      }
+    });
+});
+</script>
 {% endblock %}

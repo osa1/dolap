@@ -6,14 +6,18 @@
   <div class="row-fluid">
 
     <h2>.</h2>
-    <h3>Dosyaların</h3>
-
+    <h3>Güncellemeler</h3>
 
     <table class="table table-striped" id="filelisttable">
       <td>Dosya</td>
       <td>Boyut</td>
       <td>Son değişiklik</td>
-      <tr><td id="filelist" colspan="3">Hiç dosya yok.</td></tr>
+
+      {% for f in last_updates %}
+      <tr>
+        <td>{{ f.path }}</td>
+      </tr>
+      {% endfor %}
     </table>
 
     <div class="span12">
@@ -26,5 +30,7 @@
 {% endblock %}
 
 {% block end %}
-<script src="/media/filelist.js"></script>
+<script type="text/javascript">
+
+</script>
 {% endblock %}

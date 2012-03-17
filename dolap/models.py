@@ -11,8 +11,9 @@ class User(models.Model):
 class File(models.Model):
     path = models.CharField(max_length=200)
     size = models.CharField(max_length=100)
-    # modified = models.DateTimeField()
-    modified = models.CharField(max_length=100)
+    modified = models.DateTimeField()
+    # modified = models.CharField(max_length=100)
+    added = models.DateTimeField()
     revision = models.IntegerField()
     shelves = models.ManyToManyField(Shelf, null=True)
     mime_type = models.CharField(max_length=100)
