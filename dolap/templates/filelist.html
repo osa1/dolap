@@ -39,7 +39,9 @@ function get_file_list() {
         for (var i = 0; i < data.length; i++) {
           f = data[i];
           $('#filelisttable').append('<tr id="' + i + '">');
-          $('#' + i).append('<td><a href=\"/app/file/' + f['path'] + "\">" +
+          console.log(f['owner'])
+          $('#' + i).append('<td><a href=\"/app/file/' + f['owner'] + '/' +
+            f['path'] + "\">" +
             f['path'] + "</td>");
           $('#' + i).append('<td>' + f['size'] + '</td>');
           $('#' + i).append('<td>' + f['modified'] + '</td>');

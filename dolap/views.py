@@ -72,7 +72,7 @@ def collect_files(path, client, result):
 def intro(request):
     if request.session.has_key('dropbox_client') or \
         request.session.has_key('oauth_token'):
-        return HttpResponseRedirect('/app/home/')
+        return HttpResponseRedirect('/app/files/')
         # return user_home(request)
     return render_to_response('intro.html', {})
 
@@ -151,7 +151,24 @@ def json_file_details(request, file=None):
     if request.session.get('user', None) == f.owner:
         d['owner'] = True
 
-    return HttpResponse(json.dumps(d))
+    return HttpResponse(json.dumps(d), mime_type='application/json')
+
+def file_details(request, user=None, path=None):
+    try:
+        user = User.objects.get(uid=user)
+    except User.DoesNotExist:
+        pass
+    else:
+        try:
+            f = File.objects.get(path=path, owner=user)
+        except File.DoesNotExist:
+            pass
+        else:
+            d = {'file': f, 'owner': False}
+            if request.session.get('user', None) == user:
+                d['owner'] = True
+
+            return render_to_response('details.html', d)
 
 def json_file_list(request):
     cl = request.session['dropbox_client']
@@ -164,7 +181,7 @@ def json_file_list(request):
         json_update_files(request)
 
     json_list = [{'path': f.path, 'size': f.size,
-        'modified': datetime_to_json(f.modified)} \
+        'modified': datetime_to_json(f.modified), 'owner': user_info['uid']} \
         for f in user.file_set.all()]
 
     print json_list
