@@ -7,6 +7,8 @@
 
 <div class="container" role="main">
 
+    <h2>.</h2>
+
     <ul>
       {% for s in subshelves %}
         <h3><a href="/app/shelf/{{ s.name }}">{{ s.name }}</a><h3>
@@ -20,7 +22,7 @@
 
       {% for file in files %}
       <tr>
-        <td>{{ file.path }}</td>
+        <td><a href="/app/file/{{ file.owner.uid }}/{{ file.path }}/">{{ file.path }}</a></td>
         <td>{{ file.size }}</td>
         <td>{{ file.modified }}</td>
       </tr>

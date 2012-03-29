@@ -22,7 +22,7 @@
 
       {% for f in last_updates %}
       <tr>
-        <td>{{ f.path }}</td>
+        <td><a href="/app/file/{{ f.owner.uid }}/{{ f.path }}/">{{ f.path }}</a></td>
         <td>{{ f.size }}</td>
         <td>{{ f.modified }}</td>
       </tr>

@@ -12,6 +12,9 @@
           <li {% if page == "home" %}class="active"{% endif %}>
             <a href="{% if page == "home" %}#{% else %}/app/home{% endif %}">Ev</a>
           </li>
+          <li {% if page == "files" %}class="active"{% endif %}>
+            <a href="{% if page == "files" %}#{% else %}/app/files{% endif %}">Dosyaların</a>
+          </li>
           <li {% if page == "about" %}class="active"{% endif %}>
             <a href="{% if page == "about" %}#{% else %}/app/about{% endif %}">Hakkında</a>
           </li>

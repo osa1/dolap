@@ -103,15 +103,18 @@ def json_login(request):
     cl = request.session.get('dropbox_client', False)
     sess = session.DropboxSession(APP_KEY, APP_SECRET, ACCESS_TYPE)
     mime_type = 'application/json'
+    print request.session.keys()
     if not cl:
         # user haven't logged in yet
         if request.session.has_key('oauth_token'):
-            # user have just allowed dropbox, create a session
+            # user has just allowed dropbox, create a session
             print "oauth token var"
             try:
+                print request.session['oauth_token']
                 access_token = sess.obtain_access_token(request.session['oauth_token'])
                 cl = client.DropboxClient(sess)
-            except client.ErrorResponse:
+            except client.ErrorResponse as e:
+                print e
                 # delete oauth_token and try again from beginning
                 print "oauth token hata"
                 del request.session['oauth_token']
@@ -222,9 +225,11 @@ def json_update_files(request):
     return HttpResponse(json.dumps(json_list), 'application/json')
 
 def home(request):
+    """/app/home/"""
     d = {'last_updates': File.objects.order_by('modified')[:10],
          'last_added': File.objects.order_by('added')[:10],
-         'shelves': Shelf.objects.filter(parent=None)}
+         'shelves': Shelf.objects.filter(parent=None),
+         'page': 'home'}
     return render_to_response('home.html', d)
 
 def shelf(request, shelf=None):
@@ -240,7 +245,8 @@ def shelf(request, shelf=None):
 
 # @require_in_session('dropbox_client', '/app/')
 def files(request):
-    """Homepage of the user."""
+    """/home/files/
+    Homepage of the user."""
     if not request.session.has_key('dropbox_client'):
         request.session.clear()
         return HttpResponseRedirect("/app/")
@@ -255,5 +261,5 @@ def files(request):
     # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},
     # 'email': 'dolapapp@gmail.com'}
 
-    d = {'account': user_info, 'page': 'home'}
+    d = {'account': user_info, 'page': 'files'}
     return render_to_response('user_home.html', d)
