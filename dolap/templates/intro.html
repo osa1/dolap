@@ -24,21 +24,37 @@
 {% block end %}
 <script type="text/javascript">
 var login_btn = $('#login-btn');
+var clicked = 0;
 
 login_btn.click(function() {
-  $.getJSON('/app/json_login/',
-    function(data) {
-      if (data['response'] === 'fail') {
-        console.log("response is fail");
-        login_btn.attr('target', '_blank');
-        login_btn.attr('href', data['url'])
-        login_btn.html('Buraya tıklayıp, açılan sayfadan onay vermelisin.' +
-          ' Daha sonra bu sayfayı yenile.');
-      } else if (data['response'] === 'ok') {
-        console.log('response is ok');
-        window.location.replace("/app/home/");
-      }
-    });
+  if (clicked === 0) {
+    $.getJSON('/app/json_login/',
+      function(data) {
+        clicked += 1;
+        if (data['response'] === 'fail') {
+          console.log("response is fail");
+          login_btn.attr('target', '_blank');
+          login_btn.attr('href', data['url']);
+          login_btn.html('Buraya tıklayıp, açılan sayfadan onay vermelisin.');
+        } else if (data['response'] === 'ok') {
+          console.log('response is ok');
+          window.location.replace("/app/home/");
+        }
+      });
+  } else if (clicked === 1) {
+    login_btn.html('Onay verdikten sonra buraya tıkla.');
+    login_btn.removeAttr('href').removeAttr('target');
+  } else {
+    $.getJSON('/app/json_login/',
+      function (data) {
+        if (data['response'] === 'fail') {
+          console.log("WTF?!");
+        } else if (data['response'] === 'ok') {
+          console.log('response is ok');
+          window.location.replace('/app/home/');
+        }
+      });
+  }
 });
 </script>
 {% endblock %}
