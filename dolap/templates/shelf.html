@@ -2,44 +2,40 @@
 
 
 {% block content %}
-<div class="container" role="main">
-  <div class="row-fluid">
 
-    <h2>.</h2>
+
+
+<div class="container" role="main">
 
     <ul>
-      {% for s in shelves %}
+      {% for s in subshelves %}
         <h3><a href="/app/shelf/{{ s.name }}">{{ s.name }}</a><h3>
       {% endfor %}
     </ul>
-
-    <h3>Güncellemeler</h3>
 
     <table class="table table-striped" id="filelisttable">
       <td>Dosya</td>
       <td>Boyut</td>
       <td>Son değişiklik</td>
 
-      {% for f in last_updates %}
+      {% for file in files %}
       <tr>
-        <td>{{ f.path }}</td>
-        <td>{{ f.size }}</td>
-        <td>{{ f.modified }}</td>
+        <td>{{ file.path }}</td>
+        <td>{{ file.size }}</td>
+        <td>{{ file.modified }}</td>
       </tr>
+      {% empty %}
+      <tr><td id="filelist" colspan="3">Hiç dosya yok.</td></tr>
       {% endfor %}
     </table>
-
-    <div class="span12">
-
-      <h2>.</h2>
-
-    </div>
-  </div>
 </div>
+
+
+
+
 {% endblock %}
 
 {% block end %}
 <script type="text/javascript">
-
 </script>
 {% endblock %}

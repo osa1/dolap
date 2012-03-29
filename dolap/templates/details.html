@@ -16,6 +16,20 @@
             <p class="help-block">{{ file.path }}</p>
           </div>
         </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input01">Shelves</label>
+          <div class="controls">
+            {% if owner %}
+            <input type="text" id="suggest" class="span3" placeholder=""
+              value="{{ shelves|join:", " }}">
+            {% else %}
+              <p class="help-block">{{ shelves|join:", " }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+
         <div class="control-group">
           <label class="control-label" for="input01">Link</label>
           <div class="controls">
@@ -47,16 +61,29 @@
 {% endblock %}
 
 {% block end %}
+<script src="/media/bootstrap/js/jquery.autocomplete.js"></script>
 <script type="text/javascript">
   $('#edit-btn').click(function() {
       console.log('lol');
       $.ajax({
           type: 'GET',
           url: '/app/json_edit_file/',
-          data: {description: $('#description-area').val(), path: "{{ file.path }}"},
+          data: {description: $('#description-area').val(),
+                 path: "{{ file.path }}",
+                 shelves: $('#suggest').val()},
           dataType: 'json',
-          success: function(data) { console.log(data) }
+          success: function(data) { console.log(data); }
       });
   });
+
+  var shelves = [
+      {% for s in allshelves %}"{{ s.name }}"{% if not s.last %},{% endif %}{% endfor %}
+    ];
+  $("#suggest").autocomplete(shelves, {
+    multiple: true,
+    mustMatch: true,
+    autoFill: true
+  });
 </script>
+
 {% endblock %}

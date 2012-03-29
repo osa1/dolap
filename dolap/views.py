@@ -23,8 +23,8 @@ file_required_fields = ['path', 'size', 'modified', 'revision',
 def datetime_to_json(datetime):
     return datetime.strftime("%d-%m-%Y %H:%M:%S")
 
-def json_to_datetime(json):
-    return json.strptime("%d %m %Y %H:%M:%S")
+# def json_to_datetime(json):
+#     return json.strptime("%d %m %Y %H:%M:%S")
 
 def filelist_to_json(files):
     json_list = []
@@ -90,6 +90,11 @@ def json_edit_file(request):
         return HttpReponse(json.dumps({'status': 'error', 'reason': 'file does not exist'}))
 
     f.description = request.GET['description']
+    f.shelves.clear()
+    for s in request.GET['shelves'].split(', '):
+        ss = s.strip()
+        if ss:
+            f.shelves.add(Shelf.objects.get(name=ss))
     f.save()
 
     return HttpResponse(json.dumps({'status': 'ok'}))
@@ -164,7 +169,10 @@ def file_details(request, user=None, path=None):
         except File.DoesNotExist:
             pass
         else:
-            d = {'file': f, 'owner': False}
+            d = {'file': f,
+                'owner': False,
+                'shelves': f.shelves.all(),
+                'allshelves': Shelf.objects.all()}
             if request.session.get('user', None) == user:
                 d['owner'] = True
 
@@ -215,11 +223,23 @@ def json_update_files(request):
 
 def home(request):
     d = {'last_updates': File.objects.order_by('modified')[:10],
-         'last_added': File.objects.order_by('added')[:10]}
+         'last_added': File.objects.order_by('added')[:10],
+         'shelves': Shelf.objects.filter(parent=None)}
     return render_to_response('home.html', d)
 
+def shelf(request, shelf=None):
+    try:
+        s = Shelf.objects.get(name=shelf)
+    except Shelf.DoesNotExist:
+        pass
+    else:
+        files = s.file_set.all()
+        subshelves = s.shelf_set.all()
+        d = {'files': files, 'subshelves': subshelves}
+        return render_to_response('shelf.html', d)
+
 # @require_in_session('dropbox_client', '/app/')
-def user_home(request):
+def files(request):
     """Homepage of the user."""
     if not request.session.has_key('dropbox_client'):
         request.session.clear()

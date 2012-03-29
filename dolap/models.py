@@ -6,7 +6,8 @@ class Shelf(models.Model):
     #subshelves = models.ManyToManyField('self')
 
     def __unicode__(self):
-        return "name=%s, parent=%s" % (self.name, self.parent)
+        # return "name=%s, parent=%s" % (self.name, self.parent)
+        return self.name
 
 class User(models.Model):
     uid = models.IntegerField(primary_key=True)
