@@ -31,11 +31,20 @@
 {% block end %}
 <script type="text/javascript">
 
+function create_tds (table) {
+  table.append('<td>Dosya</td>');
+  table.append('<td>Boyut</td>');
+  table.append('<td>Son değişiklik</td>');
+  table.append('<tr><td id="filelist" colspan="3"></td></tr>');
+}
+
 function update_file_table(data) {
   if (data.length === 0) {
     $('#filelist').html('Hiç dosya yok.');
   } else {
+    $('#filelisttable').html('');
     $('#filelist').html('');
+    create_tds($("#filelisttable"));
     for (var i = 0; i < data.length; i++) {
       f = data[i];
       $('#filelisttable').append('<tr id="' + i + '">');
