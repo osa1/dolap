@@ -9,13 +9,8 @@
     <h3>Dosyaların</h3>
 
     <a class="btn btn-primary" href="">Dosyalarını düncelle</a>
-    <table class="table table-striped" id="filelisttable">
-      <td>Dosya</td>
-      <td>Boyut</td>
-      <td>Son değişiklik</td>
-      <tr><td id="filelist" colspan="3">Hiç dosya yok.</td></tr>
 
-    </table>
+    <div id="tablewashere"></div>
 
     <div class="span12">
 
@@ -28,7 +23,25 @@
 
 {% block end %}
 <script type="text/javascript">
+
+function create_filelist_table (parent) {
+  parent.append('<table class="table table-stripped" id="filelisttable"></table>');
+  var table = $("#filelisttable");
+  table.append('<td>Dosya</td>');
+  table.append('<td>Boyut</td>');
+  table.append('<td>Son değişiklik</td>');
+}
+
+function add_no_file_tr (table) {
+  table.append('<tr><td id="filelist" colspan="3">Hiç dosya yok.</td></tr>');
+}
+
+crate_filelist_table($("#tablewashere"));
+add_no_file_tr($("#filelisttable"));
+
 function get_file_list() {
+  $("#tablewashere").html();
+
   $('#filelist').html('Dosya listesi alınıyor.');
   $.getJSON('/app/json_file_list/',
     function(data) {

@@ -43,8 +43,9 @@ login_btn.click(function() {
       });
   } else if (clicked === 1) {
     login_btn.html('Onay verdikten sonra buraya tıkla.');
-    login_btn.removeAttr('href').removeAttr('target');
+    clicked += 1;
   } else {
+    login_btn.removeAttr('href').removeAttr('target');
     $.getJSON('/app/json_login/',
       function (data) {
         if (data['response'] === 'fail') {

@@ -18,7 +18,7 @@ months = {['Jan', 'Feb', 'Mar', 'Apr', 'May',
 
 # these fields will be read from Dropbox API's file dict and written to db
 file_required_fields = ['path', 'size', 'modified', 'revision',
-    'mime_type', 'owner', 'added']
+    'mime_type', 'owner', 'added', 'share_link']
 
 def datetime_to_json(datetime):
     return datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -175,7 +175,8 @@ def file_details(request, user=None, path=None):
             d = {'file': f,
                 'owner': False,
                 'shelves': f.shelves.all(),
-                'allshelves': Shelf.objects.all()}
+                'allshelves': Shelf.objects.all(),
+                'account': request.session.get('user_info', False)}
             if request.session.get('user', None) == user:
                 d['owner'] = True
 
@@ -213,6 +214,8 @@ def json_update_files(request):
             "%s %02d %s %s" % (tokens[1], months[tokens[2]], tokens[3], tokens[4]),
             "%d %m %Y %H:%M:%S")
         f['modified'] = modified_date
+        f['share_link'] = cl.share(f['path'])['url']
+        print "share_link:", f['share_link']
         fm = File(**{field : f[field] for field in file_required_fields})
         fm.added = datetime.datetime.now()
         fm.save()
@@ -229,7 +232,8 @@ def home(request):
     d = {'last_updates': File.objects.order_by('modified')[:10],
          'last_added': File.objects.order_by('added')[:10],
          'shelves': Shelf.objects.filter(parent=None),
-         'page': 'home'}
+         'page': 'home',
+         'account': request.session.get('user_info', False)}
     return render_to_response('home.html', d)
 
 def shelf(request, shelf=None):

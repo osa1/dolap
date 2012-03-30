@@ -33,7 +33,7 @@
         <div class="control-group">
           <label class="control-label" for="input01">Link</label>
           <div class="controls">
-            <p class="help-block">{{ share_link }}</p>
+            <p class="help-block">{{ file.share_link }}</p>
           </div>
         </div>
         <div class="control-group">
@@ -64,6 +64,7 @@
 <script src="/media/bootstrap/js/jquery.autocomplete.js"></script>
 <script type="text/javascript">
   $('#edit-btn').click(function() {
+      $('#edit-btn').html('Saving ..');
       console.log('lol');
       $.ajax({
           type: 'GET',
@@ -72,7 +73,10 @@
                  path: "{{ file.path }}",
                  shelves: $('#suggest').val()},
           dataType: 'json',
-          success: function(data) { console.log(data); }
+          success: function(data) {
+            console.log(data);
+            $('#edit-btn').html('Save changes');
+          }
       });
   });
 
