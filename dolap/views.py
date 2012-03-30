@@ -218,7 +218,7 @@ def json_update_files(request):
         fm.save()
         print f
 
-    json_list = [{'path': f.path, 'size': f.size,
+    json_list = [{'path': f.path, 'size': f.size, 'owner': f.owner.uid,
         'modified': datetime_to_json(f.modified)} \
         for f in user.file_set.all()]
 
