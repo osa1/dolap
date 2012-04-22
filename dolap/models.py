@@ -11,6 +11,9 @@ class Shelf(models.Model):
 
 class User(models.Model):
     uid = models.IntegerField(primary_key=True)
+    email = models.EmailField(null=True)
+    display_name = models.CharField(max_length=100, null=True)
+    following = models.ManyToManyField('self', null=True)
 
     def __unicode__(self):
         return "uid=%s" % self.uid
@@ -24,6 +27,8 @@ class File(models.Model):
     revision = models.IntegerField()
     shelves = models.ManyToManyField(Shelf, null=True)
     mime_type = models.CharField(max_length=100)
+    share_link = models.CharField(max_length=100, null=True)
+    # share_expires = models.DateTimeField(null=True)
     owner = models.ForeignKey(User)
     description = models.TextField(null=True)
 
