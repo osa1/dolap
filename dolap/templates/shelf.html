@@ -9,10 +9,23 @@
 
     <h2>.</h2>
 
-    <ul>
-      {% for s in subshelves %}
-        <h3><a href="/app/shelf/{{ s.name }}">{{ s.name }}</a><h3>
+    <ul class="breadcrumb">
+
+      {% for parent in parents %}
+      <li><a href="/app/shelf/{{parent.name}}/">{{parent.name}}</a>
+      <span class="divider">/</span></li>
       {% endfor %}
+
+      <li class="active">
+        {{ shelf }}
+      </li>
+
+      {% for s in subshelves %}
+      [ <a href="/app/shelf/{{s.name}}/">{{ s.name }}</a>
+      {% if not forloop.last %}, {% endif %}
+      ]
+      {% endfor %}
+
     </ul>
 
     <table class="table table-striped" id="filelisttable">

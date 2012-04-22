@@ -7,6 +7,8 @@ from dolap.models import User, File, Shelf
 
 import datetime
 import json
+import urllib
+import hashlib
 
 APP_KEY = '452mpmxv6d354xd'
 APP_SECRET = 'ihol6nu966f9ts5'
@@ -46,6 +48,13 @@ def json_last_added_files(request):
 
 def json_last_updated_files(request):
     return HttpResponse(last_updated_files(count=int(request.GET.get('count', 10))))
+
+def create_gravatar_link(email, size=30):
+    default = "http://www.example.com/default.jpg"
+
+    gravatar_url = "http://www.gravatar.com/avatar/" + hashlib.md5(email.lower()).hexdigest() + "?"
+    gravatar_url += urllib.urlencode({'d':default, 's':str(size)})
+    return gravatar_url
 
 def collect_files(path, client, result):
     """Recursively collect files in path and it's subfolders using an Dropbox client"""
@@ -121,6 +130,9 @@ def json_login(request):
                 return json_login(request)
             else:
                 request.session['dropbox_client'] = cl
+                user_info = cl.account_info()
+                user_info['gravatar_url'] = create_gravatar_link(user_info['email'])
+                request.session['user_info'] = user_info
                 return HttpResponse(json.dumps({'response': 'ok'}), mime_type)
                 # return HttpResponseRedirect('/app/home')
         else:
@@ -188,12 +200,16 @@ def json_file_list(request):
 
     user, is_new = User.objects.get_or_create(uid=user_info['uid'])
     request.session['user'] = user
+    request.session['account'] = user_info
 
     if is_new:
+        user.email = user_info['email']
+        user.display_name = user_info['display_name']
+        user.save()
         json_update_files(request)
 
     json_list = [{'path': f.path, 'size': f.size,
-        'modified': datetime_to_json(f.modified), 'owner': user_info['uid']} \
+                  'modified': datetime_to_json(f.modified), 'owner': user_info['uid']} \
         for f in user.file_set.all()]
 
     print json_list
@@ -201,25 +217,41 @@ def json_file_list(request):
 
 def json_update_files(request):
     user = request.session['user']
-    for f in File.objects.filter(owner=user):
-        f.delete()
+    # for f in File.objects.filter(owner=user):
+    #     f.delete()
 
     cl = request.session['dropbox_client']
     files = collect_files('/', cl, [])
     for f in files:
-        f['owner'] = user
-        f['added'] = datetime.datetime.now()
-        tokens = f['modified'].split()
-        modified_date = datetime.datetime.strptime(
-            "%s %02d %s %s" % (tokens[1], months[tokens[2]], tokens[3], tokens[4]),
-            "%d %m %Y %H:%M:%S")
-        f['modified'] = modified_date
-        f['share_link'] = cl.share(f['path'])['url']
-        print "share_link:", f['share_link']
-        fm = File(**{field : f[field] for field in file_required_fields})
-        fm.added = datetime.datetime.now()
-        fm.save()
-        print f
+        # update files instead of creating new
+        try:
+            dbf = File.objects.get(path=f['path'], owner=user)
+        except File.DoesNotExist:
+            print "new file"
+            f['owner'] = user
+            f['added'] = datetime.datetime.now()
+            tokens = f['modified'].split()
+            modified_date = datetime.datetime.strptime(
+                "%s %02d %s %s" % (tokens[1], months[tokens[2]], tokens[3], tokens[4]),
+                "%d %m %Y %H:%M:%S")
+            f['modified'] = modified_date
+            f['share_link'] = cl.share(f['path'])['url']
+            print "share_link:", f['share_link']
+            fm = File(**{field : f[field] for field in file_required_fields})
+            fm.added = datetime.datetime.now()
+            fm.save()
+            print f
+        else:
+            print "update file"
+            tokens = f['modified'].split()
+            modified_date = datetime.datetime.strptime(
+                "%s %02d %s %s" % (tokens[1], months[tokens[2]], tokens[3], tokens[4]),
+                "%d %m %Y %H:%M:%S")
+            dbf.modified = modified_date
+            dbf.share_link = cl.share(f['path'])['url']
+            dbf.size = f['size']
+            dbf.revision = f['revision']
+
 
     json_list = [{'path': f.path, 'size': f.size, 'owner': f.owner.uid,
         'modified': datetime_to_json(f.modified)} \
@@ -243,9 +275,21 @@ def shelf(request, shelf=None):
         pass
     else:
         files = s.file_set.all()
+        parents = []
+        parent = s.parent
+        while parent:
+            parents = [parent] + parents
+            parent = parent.parent
+
         subshelves = s.shelf_set.all()
-        d = {'files': files, 'subshelves': subshelves}
+        d = {'files': files, 'subshelves': subshelves, 'parents': parents,
+             'shelf': shelf, 'account': request.session.get('user_info', False)}
         return render_to_response('shelf.html', d)
+
+def profile(request, uid):
+    profile = User.objects.get(uid=uid)
+    return render_to_response('profile.html', {'profile': profile,
+                                               'account': request.session.get('user_info', False)})
 
 # @require_in_session('dropbox_client', '/app/')
 def files(request):
@@ -257,9 +301,9 @@ def files(request):
 
     cl = request.session['dropbox_client']
     user_info = request.session.get('user_info', False)
-    if not user_info:
-        user_info = cl.account_info()
-        request.session['user_info'] = user_info
+    # if not user_info:
+    #     user_info = cl.account_info()
+    #     request.session['user_info'] = user_info
     # linked account: {'referral_link': 'https://www.dropbox.com/referrals/NTY2MzYzODEzOQ',
     # 'display_name': 'dolap app', 'uid': 66363813, 'country': 'TR',
     # 'quota_info': {'shared': 3180657, 'quota': 2147483648, 'normal': 1421746},

@@ -7,10 +7,13 @@
 
     <h2>.</h2>
 
-    <ul>
+    <ul class="breadcrumb">
+
       {% for s in shelves %}
-        <h3><a href="/app/shelf/{{ s.name }}">{{ s.name }}</a><h3>
+      <li><a href="/app/shelf/{{s.name}}/">{{s.name}}</a>
+      <span class="divider">/</span></li>
       {% endfor %}
+
     </ul>
 
     <h3>Güncellemeler</h3>
