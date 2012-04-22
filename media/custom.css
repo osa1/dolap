@@ -1,0 +1,11 @@
+.gravatar {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  /*line-height: 30px;*/
+  vertical-align: text-top;
+  /*background-image: url("../img/glyphicons-halflings.png");*/
+  background-position: 5px 5px;
+  background-repeat: no-repeat;
+  margin-right: 0.6em;
+}

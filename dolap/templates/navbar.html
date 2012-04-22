@@ -6,18 +6,17 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </a>
-      <a class="brand" href="#">Dolap</a>
+      <a class="brand" href="/app/">Dolap</a>
       <div class="nav-collapse">
           <ul class="nav pull-left">
           <li {% if page == "home" %}class="active"{% endif %}>
             <a href="{% if page == "home" %}#{% else %}/app/home{% endif %}">Ev</a>
           </li>
+          {% if account %}
           <li {% if page == "files" %}class="active"{% endif %}>
             <a href="{% if page == "files" %}#{% else %}/app/files{% endif %}">Dosyaların</a>
           </li>
-          <li {% if page == "about" %}class="active"{% endif %}>
-            <a href="{% if page == "about" %}#{% else %}/app/about{% endif %}">Hakkında</a>
-          </li>
+          {% endif %}
         </ul>
 
 
@@ -27,7 +26,7 @@
 
         <ul class="nav pull-right">
           {% if account %}
-            <li><p class="navbar-text pull-right">Logged in as <a href="#">{{ account.display_name }}</a></p></li>
+            <li><i class="gravatar" style="background-image: url('{{ account.gravatar_url }}');"></i><p class="navbar-text pull-right">Logged in as <a href="/app/home/">{{ account.display_name }}</a></p></li>
             <li class="divider-vertical"></li>
             <li><p class="navbar-text pull-right"><a href="/app/logout">Logout</a></p></li>
           {% endif %}
