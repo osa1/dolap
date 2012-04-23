@@ -18,7 +18,7 @@ class User(models.Model):
     uid = models.IntegerField(primary_key=True)
     email = models.EmailField(null=True)
     display_name = models.CharField(max_length=100, null=True)
-    following = models.ManyToManyField('self', null=True)
+    following = models.ManyToManyField('self', null=True, symmetrical=False)
 
     @property
     def file_count(self):
