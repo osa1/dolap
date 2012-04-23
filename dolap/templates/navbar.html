@@ -26,7 +26,7 @@
 
         <ul class="nav pull-right">
           {% if account %}
-            <li><i class="gravatar" style="background-image: url('{{ account.gravatar_url }}');"></i><p class="navbar-text pull-right">Logged in as <a href="/app/home/">{{ account.display_name }}</a></p></li>
+            <li><i class="gravatar-navbar" style="background-image: url('{{ account.gravatar_url }}');"></i><p class="navbar-text pull-right">Logged in as <a href="/app/home/">{{ account.display_name }}</a></p></li>
             <li class="divider-vertical"></li>
             <li><p class="navbar-text pull-right"><a href="/app/logout">Logout</a></p></li>
           {% endif %}

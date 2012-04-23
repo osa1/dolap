@@ -4,11 +4,10 @@ from django.shortcuts import render_to_response
 from dropbox import client, rest, session
 
 from dolap.models import User, File, Shelf
+from gravatar import create_gravatar_link
 
 import datetime
 import json
-import urllib
-import hashlib
 
 APP_KEY = '452mpmxv6d354xd'
 APP_SECRET = 'ihol6nu966f9ts5'
@@ -48,13 +47,6 @@ def json_last_added_files(request):
 
 def json_last_updated_files(request):
     return HttpResponse(last_updated_files(count=int(request.GET.get('count', 10))))
-
-def create_gravatar_link(email, size=30):
-    default = "http://www.example.com/default.jpg"
-
-    gravatar_url = "http://www.gravatar.com/avatar/" + hashlib.md5(email.lower()).hexdigest() + "?"
-    gravatar_url += urllib.urlencode({'d':default, 's':str(size)})
-    return gravatar_url
 
 def collect_files(path, client, result):
     """Recursively collect files in path and it's subfolders using an Dropbox client"""
@@ -259,6 +251,26 @@ def json_update_files(request):
 
     return HttpResponse(json.dumps(json_list), 'application/json')
 
+def json_follow_user(request, uid):
+    user_info = request.session.get('user_info', False)
+    try:
+        user = User.objects.get(uid=user_info['uid'])
+        user.following.add(User.objects.get(uid=int(uid)))
+    except User.DoesNotExist as e:
+        print "doesnotexist"
+        return HttpResponse(json.dumps({'response': 'error'}))
+    return HttpResponse(json.dumps({'response': 'ok'}))
+
+def json_unfollow_user(request, uid):
+    user_info = request.session.get('user_info', False)
+    try:
+        user = User.objects.get(uid=user_info['uid'])
+        user.following.remove(User.objects.get(uid=int(uid)))
+    except User.DoesNotExist as e:
+        print "doesnotexist"
+        return HttpResponse(json.dumps({'response': 'error'}))
+    return HttpResponse(json.dumps({'response': 'ok'}))
+
 def home(request):
     """/app/home/"""
     d = {'last_updates': File.objects.order_by('modified')[:10],
@@ -288,8 +300,12 @@ def shelf(request, shelf=None):
 
 def profile(request, uid):
     profile = User.objects.get(uid=uid)
-    return render_to_response('profile.html', {'profile': profile,
-                                               'account': request.session.get('user_info', False)})
+    user_info = request.session.get('user_info', False)
+    d = {'profile': profile,
+         'account': user_info}
+    if user_info:
+        d['loggedacc'] = User.objects.get(uid=user_info['uid'])
+    return render_to_response('profile.html', d)
 
 # @require_in_session('dropbox_client', '/app/')
 def files(request):

@@ -1,5 +1,10 @@
 from django.db import models
 
+from gravatar import create_gravatar_link
+
+# recursive import
+# from views import create_gravatar_link
+
 class Shelf(models.Model):
     name = models.CharField(max_length=50)
     parent = models.ForeignKey('self', null=True)
@@ -14,6 +19,14 @@ class User(models.Model):
     email = models.EmailField(null=True)
     display_name = models.CharField(max_length=100, null=True)
     following = models.ManyToManyField('self', null=True)
+
+    @property
+    def file_count(self):
+        return len(File.objects.filter(owner=self.uid))
+
+    @property
+    def gravatar_link(self):
+        return create_gravatar_link(self.email)
 
     def __unicode__(self):
         return "uid=%s" % self.uid

@@ -1,5 +1,86 @@
-<ul>
-{% for user in profile.followers %}
-    <li>{{ user.display_name }}</li>
-{% endfor %}
-</ul>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container" role="main">
+  <div class="row-floid">
+    <h2>.</h2>
+
+    <table class="table table-strippted" id="following-list">
+      <td>Kullanıcı</td>
+      <td>Dosya sayısı</td>
+      <td></td>
+      {% for user in profile.following.all %}
+      <tr>
+        <td>
+          <i class="gravatar-profile" style="background-image: url('{{ user.gravatar_link }}');"></i>
+          {{ user.display_name }}
+        </td>
+        <td>{{ user.file_count }}</td>
+        {% if profile == loggedacc %}
+        <td>
+        <a class="btn btn-small" id="unfollow-{{ user.uid }}">
+          Unfollow
+        </a>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block end %}
+<script type="text/javascript">
+var btns = $("td>a");
+
+for (var i = 0; i < btns.length; i++) {
+  var btn = $("#" + btns[i].id);
+  console.log(btn);
+  var id = btns[i].id.split("-")[1];
+
+  btn.click(function () {
+    btn.addClass("disabled");
+
+    if (btn.html().trim().toLowerCase() === 'unfollow') {
+      console.log("unfollow");
+      $.ajax({
+        type: 'GET',
+        url: '/app/unfollow/' + id,
+        dataType: 'json',
+
+        success: function(data) {
+          console.log(data);
+          if (data.response === 'ok') {
+            btn.removeClass("disabled");
+            btn.removeClass("btn");
+            btn.addClass("btn-primary");
+            btn.html("Follow");
+          }
+        }
+      });
+    } else if (btn.html().trim().toLowerCase() === 'follow') {
+      console.log("follow");
+      $.ajax({
+        type: 'GET',
+        url: '/app/follow/' + id,
+        dataType: 'json',
+
+        success: function(data) {
+          console.log(data);
+          if (data.response === 'ok') {
+            btn.removeClass("disabled");
+            btn.removeClass("btn");
+            btn.addClass("btn-primary");
+            btn.html("Unfollow");
+          }
+        }
+      });
+    }
+  });
+}
+
+</script>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.conf.urls.defaults import patterns, include, url
 from views import files, intro, logout, home, \
     json_login, json_edit_file, json_file_list, json_file_details, \
     json_last_added_files, json_last_updated_files, json_update_files, \
-    file_details, shelf, profile
+    file_details, shelf, profile, json_follow_user, json_unfollow_user
 
 urlpatterns = patterns('',
     (r'^$', intro),
@@ -22,6 +22,8 @@ urlpatterns = patterns('',
     (r'^json_update_files/$', json_update_files),
     # TODO: match %
     (r'^json_file_details/(?P<file>[A-Za-z0-9-_%/\.]+)/$', json_file_details),
+    (r'^follow/(?P<uid>[0-9]+)/$', json_follow_user),
+    (r'^unfollow/(?P<uid>[0-9]+)/$', json_unfollow_user),
 
     (r'^logout/$', logout),
 )
