@@ -88,7 +88,7 @@ def json_edit_file(request):
     try:
         f = File.objects.get(path=path, owner=request.session['user'])
     except File.DoesNotExist:
-        return HttpReponse(json.dumps({'status': 'error', 'reason': 'file does not exist'}))
+        return HttpResponse(json.dumps({'status': 'error', 'reason': 'file does not exist'}))
 
     f.description = request.GET['description']
     f.shelves.clear()
