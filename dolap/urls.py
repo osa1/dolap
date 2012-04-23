@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls.defaults import patterns
 
 from views import files, intro, logout, home, \
     json_login, json_edit_file, json_file_list, json_file_details, \
@@ -9,7 +9,7 @@ urlpatterns = patterns('',
     (r'^$', intro),
     (r'^home/$', home),
     (r'^files/$', files),
-    (r'^file/(?P<user>[0-9]+)/(?P<path>[A-Za-z0-9-_%/ \.]+)/$',
+    (r'^file/(?P<file_owner>[0-9]+)/(?P<path>[A-Za-z0-9-_%/ \.]+)/$',
         file_details),
     (r'^shelf/(?P<shelf>[A-Za-z0-9- _]+)/$', shelf),
     (r'^user/(?P<uid>[0-9]+)/$', profile),
