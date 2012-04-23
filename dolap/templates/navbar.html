@@ -12,21 +12,20 @@
           <li {% if page == "home" %}class="active"{% endif %}>
             <a href="{% if page == "home" %}#{% else %}/app/home{% endif %}">Ev</a>
           </li>
-          {% if account %}
+          {% if request.session.user %}
           <li {% if page == "files" %}class="active"{% endif %}>
             <a href="{% if page == "files" %}#{% else %}/app/files{% endif %}">Dosyaların</a>
           </li>
           {% endif %}
         </ul>
 
-
         <form class="navbar-search pull-left">
           <input type="text" class="search-query" placeholder="Search">
         </form>
 
         <ul class="nav pull-right">
-          {% if account %}
-            <li><i class="gravatar-navbar" style="background-image: url('{{ account.gravatar_url }}');"></i><p class="navbar-text pull-right">Logged in as <a href="/app/home/">{{ account.display_name }}</a></p></li>
+          {% if request.session.user %}
+            <li><i class="gravatar-navbar" style="background-image: url('{{ request.session.user.gravatar_url }}');"></i><p class="navbar-text pull-right">Logged in as <a href="/app/home/">{{ request.session.user.display_name }}</a></p></li>
             <li class="divider-vertical"></li>
             <li><p class="navbar-text pull-right"><a href="/app/logout">Logout</a></p></li>
           {% endif %}
