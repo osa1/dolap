@@ -7,6 +7,11 @@
 
     <h2>.</h2>
 
+    <div class="alert fade in" id="first-time-alert">
+      <a class="close" data-dismiss="alert">×</a>
+      <strong>Warning!</strong> This is your first login. Adding your file list to database. This may take some time...
+    </div>
+
     <ul class="breadcrumb">
 
       {% for s in shelves %}
@@ -42,7 +47,24 @@
 {% endblock %}
 
 {% block end %}
+<script src="/media/bootstrap/js/bootstrap-alert.js"></script>
 <script type="text/javascript">
-
+$("#first-time-alert").hide();
+if ("{{ is_new }}" === "True") {
+    $("#first-time-alert").show();
+    $.ajax({
+        type: 'GET',
+        url: '/app/json_update_files/',
+        dataType: 'json',
+        success: function(data) {
+          console.log(data);
+          $("#first-time-alert").addClass("alert-success");
+          $("#first-time-alert").html("You file list is updated!");
+          setTimeout(function () {
+            $("#first-time-alert").alert('close');
+          }, 3000);
+        }
+    });
+}
 </script>
 {% endblock %}
