@@ -320,11 +320,7 @@ def shelf(request, shelf=None):
 @require_in_session('user', '/app/')
 def profile(request, uid):
     profile = User.objects.get(uid=uid)
-    user_info = request.session.get('user_info', False)
-    d = {'profile': profile,
-         'account': user_info}
-    if user_info:
-        d['loggedacc'] = User.objects.get(uid=user_info['uid'])
+    d = {'profile': profile}
     return render_to_response('profile.html', d, context_instance=RequestContext(request))
 
 @require_in_session('user', '/app/')

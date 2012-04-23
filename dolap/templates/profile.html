@@ -17,7 +17,7 @@
           {{ user.display_name }}
         </td>
         <td>{{ user.file_count }}</td>
-        {% if profile == loggedacc %}
+        {% if profile == request.session.user %}
         <td>
         <a class="btn btn-small" id="unfollow-{{ user.uid }}">
           Unfollow
